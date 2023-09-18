@@ -26,6 +26,19 @@ func main() {
 
 }
 
+func getNeighbors(grid Grid, row, col int) (neighbors []uint8) {
+	for i := row - 1; i <= row+1; i++ {
+		for j := col - 1; j <= col+1; j++ {
+			if i >= 0 && i < len(grid) && j >= 0 && j < len(grid[0]) {
+				if i != row || j != col {
+					neighbors = append(neighbors, grid[i][j])
+				}
+			}
+		}
+	}
+	return neighbors
+}
+
 func sum(ar []uint8) (r uint8) {
 	for _, v := range ar {
 		r += v
@@ -38,43 +51,9 @@ func updateGrid(g Grid, n *int) (newGrid Grid) {
 	newGrid = initGrid(n, false)
 	for index := range g {
 		for index2, value := range g[index] {
-			neighbour := make([]uint8, *n)
-			// east
-			if index2 < *n-1 {
-				neighbour = append(neighbour, g[index][index2+1])
-			}
-			// west
-			if index2 > 0 {
-				neighbour = append(neighbour, g[index][index2-1])
-			}
-			// north
-			if index > 0 {
-				neighbour = append(neighbour, g[index-1][index2])
-			}
-			// south
-			if index < *n-1 {
-				neighbour = append(neighbour, g[index+1][index2])
-			}
-			// north west
-			if index > 0 && index2 > 0 {
-				neighbour = append(neighbour, g[index-1][index2-1])
-			}
-			// north east
-			if index > 0 && index2 < *n-1 {
-				neighbour = append(neighbour, g[index-1][index2+1])
-			}
-			// south east
-			if index < *n-1 && index2 < *n-1 {
-				neighbour = append(neighbour, g[index+1][index2+1])
-			}
-			// south west
-			if index < *n-1 && index2 > 0 {
-				neighbour = append(neighbour, g[index+1][index2-1])
-			}
-			if ((sum(neighbour) == 2 || sum(neighbour) == 3) && value == 1) || (sum(neighbour) == 3 && value == 0) {
+			neighbour := getNeighbors(g, index, index2)
+			if (value == 1 && (sum(neighbour) == 2 || sum(neighbour) == 3)) || (value != 1 && sum(neighbour) == 3) {
 				newGrid[index][index2] = 1
-			} else {
-				newGrid[index][index2] = 0
 			}
 		}
 	}

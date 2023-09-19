@@ -8,8 +8,10 @@ import (
 )
 
 type Grid [][]uint8
+type Cell bool
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	n := flag.Int("n", 5, "Value of \"n\"")
 
 	flag.Parse()
@@ -18,15 +20,16 @@ func main() {
 	var generation int
 	for {
 		fmt.Printf("\nGeneration: %v\n", generation)
-		drawGrid(grid)
-		grid = updateGrid(grid, n)
+		grid.drawGrid()
+		grid = grid.updateGrid(n)
 		generation++
 		time.Sleep(3 * time.Second)
 	}
 
 }
 
-func getNeighbors(grid Grid, row, col int) (neighbors []uint8) {
+func (grid Grid) getNeighbors(row, col int) uint8 {
+	var neighbors []uint8
 	for i := row - 1; i <= row+1; i++ {
 		for j := col - 1; j <= col+1; j++ {
 			if i >= 0 && i < len(grid) && j >= 0 && j < len(grid[0]) {
@@ -36,7 +39,7 @@ func getNeighbors(grid Grid, row, col int) (neighbors []uint8) {
 			}
 		}
 	}
-	return neighbors
+	return sum(neighbors)
 }
 
 func sum(ar []uint8) (r uint8) {
@@ -46,13 +49,12 @@ func sum(ar []uint8) (r uint8) {
 	return r
 }
 
-func updateGrid(g Grid, n *int) (newGrid Grid) {
-	rand.Seed(time.Now().UnixNano())
+func (g Grid) updateGrid(n *int) (newGrid Grid) {
 	newGrid = initGrid(n, false)
 	for index := range g {
 		for index2, value := range g[index] {
-			neighbour := getNeighbors(g, index, index2)
-			if (value == 1 && (sum(neighbour) == 2 || sum(neighbour) == 3)) || (value != 1 && sum(neighbour) == 3) {
+			neighbour := g.getNeighbors(index, index2)
+			if neighbour == 3 || (neighbour == 2 && value == 1) {
 				newGrid[index][index2] = 1
 			}
 		}
@@ -60,7 +62,7 @@ func updateGrid(g Grid, n *int) (newGrid Grid) {
 	return newGrid
 }
 
-func drawGrid(g Grid) {
+func (g Grid) drawGrid() {
 	var stringGrid string
 	for index := range g {
 		for _, value2 := range g[index] {
@@ -72,7 +74,7 @@ func drawGrid(g Grid) {
 }
 
 func initGrid(n *int, premier bool) (nascentGrid Grid) {
-	nascentGrid = make([][]uint8, *n)
+	nascentGrid = make(Grid, *n)
 	for index := range nascentGrid {
 		nascentGrid[index] = make([]uint8, *n)
 		for index2 := range nascentGrid[index] {

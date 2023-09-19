@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -12,6 +13,8 @@ type Cell bool
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	// var wg sync.WaitGroup
+
 	n := flag.Int("n", 5, "Value of \"n\"")
 
 	flag.Parse()
@@ -21,11 +24,11 @@ func main() {
 	for {
 		fmt.Printf("\nGeneration: %v\n", generation)
 		grid.drawGrid()
+		// grid = grid.updateGridConc(n, &wg)
 		grid = grid.updateGrid(n)
 		generation++
 		time.Sleep(3 * time.Second)
 	}
-
 }
 
 func (grid Grid) getNeighbors(row, col int) uint8 {
@@ -60,6 +63,25 @@ func (g Grid) updateGrid(n *int) (newGrid Grid) {
 		}
 	}
 	return newGrid
+}
+func (g Grid) updateGridConc(n *int, wwwg *sync.WaitGroup) (newGrid Grid) {
+	newGrid = initGrid(n, false)
+	for index := range g {
+		for index2, value := range g[index] {
+			wwwg.Add(1)
+			go newValue(g, index, index2, value, newGrid, wwwg)
+		}
+	}
+	wwwg.Wait()
+	return newGrid
+}
+
+func newValue(g Grid, index, index2 int, value uint8, newGrid Grid, wwg *sync.WaitGroup) {
+	neighbour := g.getNeighbors(index, index2)
+	if neighbour == 3 || (neighbour == 2 && value == 1) {
+		newGrid[index][index2] = 1
+	}
+	wwg.Done()
 }
 
 func (g Grid) drawGrid() {
